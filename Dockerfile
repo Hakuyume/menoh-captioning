@@ -56,7 +56,7 @@ RUN tar -cvf install.tar \
     /usr/local/bin/menoh-captioning \
     /usr/local/lib \
     /usr/local/share/*.onnx \
-    /usr/local/share/*.txt \
+    /usr/local/share/*.txt
 
 FROM debian:stretch AS deploy
 RUN apt-get update && apt-get install -y --no-install-recommends \
