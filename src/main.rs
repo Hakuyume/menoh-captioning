@@ -14,7 +14,7 @@ mod model;
 use std::io::BufRead;
 
 const USAGE: &'static str = r#"
-Captioning on Menoh
+Image captioning on Menoh
 
 Usage: menoh-captioning <src>
 "#;
