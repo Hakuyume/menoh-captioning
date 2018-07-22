@@ -1,6 +1,7 @@
 # menoh-captioning
 
 Image captioning on [Menoh](https://github.com/pfnet-research/menoh)
+
 The model is based on [Chainer's example](https://github.com/chainer/chainer/blob/master/examples/image_captioning/)
 
 ## Requirements
