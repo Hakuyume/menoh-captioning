@@ -36,8 +36,8 @@ class Model(ImageCaptionModel):
 
     def lstm(self, h, x):
         lstm = self.lang_model.lstm[0]
-        a = F.tanh(F.linear(x, lstm.w2, lstm.b2)
-                   + F.linear(h, lstm.w6, lstm.b6))
+        a = F.linear(x, lstm.w2, lstm.b2) \
+            + F.linear(h, lstm.w6, lstm.b6)
         i = F.linear(x, lstm.w0, lstm.b0) \
             + F.linear(h, lstm.w4, lstm.b4)
         f = F.linear(x, lstm.w1, lstm.b1) \
