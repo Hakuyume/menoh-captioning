@@ -1,0 +1,10 @@
+[package]
+name = "menoh-captioning"
+version = "0.1.0"
+
+[dependencies]
+docopt = "1.0"
+image = "0.19"
+menoh = "0.1"
+serde = "1.0"
+serde_derive = "1.0"
