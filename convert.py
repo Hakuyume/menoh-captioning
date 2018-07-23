@@ -6,10 +6,10 @@ import chainer
 import chainer.functions as F
 import onnx_chainer
 
-from model import ImageCaptionModel
+from chainer_repo.examples.image_captioning import model
 
 
-class Model(ImageCaptionModel):
+class ImageCaptionModel(model.ImageCaptionModel):
 
     def __init__(self, vocab_size):
         super().__init__(vocab_size, rnn='nsteplstm')
@@ -106,7 +106,7 @@ def main():
     vocab_size = 8942
     hidden_size = 512
 
-    model = Model(vocab_size)
+    model = ImageCaptionModel(vocab_size)
     chainer.serializers.load_npz(args.model, model, strict=False)
 
     embed_img_in = np.empty((1, 3, image_size, image_size), dtype=np.float32)

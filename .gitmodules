@@ -1,0 +1,3 @@
+[submodule "chainer_repo"]
+	path = chainer_repo
+	url = https://github.com/chainer/chainer.git
