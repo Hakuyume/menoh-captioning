@@ -36,14 +36,10 @@ class ImageCaptionModel(model.ImageCaptionModel):
 
     def lstm(self, h, x):
         lstm = self.lang_model.lstm[0]
-        a = F.linear(x, lstm.w2, lstm.b2) \
-            + F.linear(h, lstm.w6, lstm.b6)
-        i = F.linear(x, lstm.w0, lstm.b0) \
-            + F.linear(h, lstm.w4, lstm.b4)
-        f = F.linear(x, lstm.w1, lstm.b1) \
-            + F.linear(h, lstm.w5, lstm.b5)
-        o = F.linear(x, lstm.w3, lstm.b3) \
-            + F.linear(h, lstm.w7, lstm.b7)
+        a = F.linear(x, lstm.w2, lstm.b2) + F.linear(h, lstm.w6, lstm.b6)
+        i = F.linear(x, lstm.w0, lstm.b0) + F.linear(h, lstm.w4, lstm.b4)
+        f = F.linear(x, lstm.w1, lstm.b1) + F.linear(h, lstm.w5, lstm.b5)
+        o = F.linear(x, lstm.w3, lstm.b3) + F.linear(h, lstm.w7, lstm.b7)
         return a, i, f, o
 
     def decode_caption(self, x):
