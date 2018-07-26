@@ -40,7 +40,7 @@ RUN git clone https://github.com/pfnet-research/menoh.git --branch=v1.0.2 --dept
 
 COPY . menoh-captioning/
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain=1.27.0
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain=stable
 RUN cd menoh-captioning \
     && sed \
     -e 's#ImageCaptionModel.onnx#/usr/local/share/ImageCaptionModel.onnx#' \
