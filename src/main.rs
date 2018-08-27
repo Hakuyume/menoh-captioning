@@ -24,7 +24,7 @@ struct Args {
     arg_src: path::PathBuf,
 }
 
-fn main() -> Result<(), Box<dyn(error::Error)>> {
+fn main() -> Result<(), Box<dyn error::Error>> {
     let args: Args = docopt::Docopt::new(USAGE)
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
@@ -45,7 +45,8 @@ fn main() -> Result<(), Box<dyn(error::Error)>> {
 }
 
 fn load_vocab<P>(path: P) -> io::Result<Vec<String>>
-    where P: AsRef<path::Path>
+where
+    P: AsRef<path::Path>,
 {
     let mut vocab = Vec::new();
     for line in io::BufReader::new(fs::File::open(path)?).lines() {

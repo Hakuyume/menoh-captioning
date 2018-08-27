@@ -18,7 +18,8 @@ pub struct ImageCaptionModel {
 
 impl ImageCaptionModel {
     pub fn from_onnx<P>(path: P, backend: &str, backend_config: &str) -> Result<Self, menoh::Error>
-        where P: AsRef<path::Path>
+    where
+        P: AsRef<path::Path>,
     {
         let build = |outputs: &[&str]| {
             let builder = menoh::Builder::from_onnx(&path)?
@@ -34,16 +35,17 @@ impl ImageCaptionModel {
         };
 
         Ok(Self {
-               embed_img: build(&["embed_img_out"])?,
-               embed_word: build(&["embed_word_out"])?,
-               lstm: build(&["lstm_a", "lstm_i", "lstm_f", "lstm_o"])?,
-               decode_caption: build(&["decode_caption_out"])?,
-           })
+            embed_img: build(&["embed_img_out"])?,
+            embed_word: build(&["embed_word_out"])?,
+            lstm: build(&["lstm_a", "lstm_i", "lstm_f", "lstm_o"])?,
+            decode_caption: build(&["decode_caption_out"])?,
+        })
     }
 
-    pub fn predict(&mut self,
-                   img: &image::DynamicImage)
-                   -> Result<Vec<Option<usize>>, menoh::Error> {
+    pub fn predict(
+        &mut self,
+        img: &image::DynamicImage,
+    ) -> Result<Vec<Option<usize>>, menoh::Error> {
         let mut h = [0.; HIDDEN_SIZE];
         let mut c = [0.; HIDDEN_SIZE];
 
@@ -71,9 +73,7 @@ impl ImageCaptionModel {
     fn embed_img(&mut self, img: &image::DynamicImage) -> Result<(), menoh::Error> {
         let img = img.resize_exact(IMAGE_SIZE as _, IMAGE_SIZE as _, image::FilterType::Nearest);
         {
-            let in_ = self.embed_img
-                .get_variable_mut::<f32>("embed_img_in")?
-                .1;
+            let in_ = self.embed_img.get_variable_mut::<f32>("embed_img_in")?.1;
             for y in 0..IMAGE_SIZE {
                 for x in 0..IMAGE_SIZE {
                     in_[(0 * IMAGE_SIZE + y) * IMAGE_SIZE + x] =
@@ -83,7 +83,6 @@ impl ImageCaptionModel {
                     in_[(2 * IMAGE_SIZE + y) * IMAGE_SIZE + x] =
                         img.get_pixel(x as _, y as _).data[0] as f32 - 123.68;
                 }
-
             }
         }
         self.embed_img.run()
@@ -91,9 +90,7 @@ impl ImageCaptionModel {
 
     fn embed_word(&mut self, t: usize) -> Result<(), menoh::Error> {
         {
-            let in_ = self.embed_word
-                .get_variable_mut::<f32>("embed_word_in")?
-                .1;
+            let in_ = self.embed_word.get_variable_mut::<f32>("embed_word_in")?.1;
             for k in 0..VOCAB_SIZE {
                 in_[k] = if k == t { 1. } else { 0. };
             }
@@ -113,10 +110,10 @@ impl ImageCaptionModel {
             .get_variable_mut::<f32>("lstm_x")?
             .1
             .copy_from_slice(if use_img {
-                                 self.embed_img.get_variable("embed_img_out")?.1
-                             } else {
-                                 self.embed_word.get_variable("embed_word_out")?.1
-                             });
+                self.embed_img.get_variable("embed_img_out")?.1
+            } else {
+                self.embed_word.get_variable("embed_word_out")?.1
+            });
 
         self.lstm.run()?;
 
@@ -143,16 +140,13 @@ impl ImageCaptionModel {
 
         self.decode_caption.run()?;
 
-        let out = self.decode_caption
+        let out = self
+            .decode_caption
             .get_variable::<f32>("decode_caption_out")?
             .1;
         Ok((0..VOCAB_SIZE)
-               .max_by(|&i, &j| {
-                           out[i]
-                               .partial_cmp(&out[j])
-                               .unwrap_or(cmp::Ordering::Equal)
-                       })
-               .unwrap())
+            .max_by(|&i, &j| out[i].partial_cmp(&out[j]).unwrap_or(cmp::Ordering::Equal))
+            .unwrap())
     }
 }
 
