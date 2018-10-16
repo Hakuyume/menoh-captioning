@@ -1,3 +1,7 @@
+"""
+This script does not work with latest onnx-chainer
+"""
+
 import argparse
 import numpy as np
 from unittest import mock
