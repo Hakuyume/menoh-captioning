@@ -3,13 +3,14 @@ FROM ubuntu:18.04
 ENV DOWNLOAD https://github.com/pfnet-research/menoh/releases/download
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+    build-essential \
     ca-certificates \
     curl \
     pkg-config \
     && curl -LO $DOWNLOAD/v1.1.0/ubuntu1804_mkl-dnn_0.16-1_amd64.deb \
     && curl -LO $DOWNLOAD/v1.1.0/ubuntu1804_menoh_1.1.0-1_amd64.deb \
     && curl -LO $DOWNLOAD/v1.1.0/ubuntu1804_menoh-dev_1.1.0-1_amd64.deb \
-    && apt install ./*.deb \
+    && apt install -y ./*.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && rm *.deb
