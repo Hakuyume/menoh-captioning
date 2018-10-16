@@ -7,7 +7,7 @@ The model is based on [Chainer's example](https://github.com/chainer/chainer/blo
 ## Requirements
 
 - Rust 1.27+
-- [Menoh](https://github.com/pfnet-research/menoh) 1.0+
+- [Menoh](https://github.com/pfnet-research/menoh) 1.1+
 
 ## Demo
 

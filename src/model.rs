@@ -30,7 +30,7 @@ impl ImageCaptionModel {
                 .add_input::<f32>("decode_caption_in", &[1, HIDDEN_SIZE])?;
             outputs
                 .iter()
-                .fold(Ok(builder), |b, o| b.and_then(|b| b.add_output::<f32>(o)))?
+                .fold(Ok(builder), |b, o| b.and_then(|b| b.add_output(o)))?
                 .build(backend, backend_config)
         };
 
