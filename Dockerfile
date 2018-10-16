@@ -9,7 +9,7 @@ RUN apt-get update \
     && curl -LO $DOWNLOAD/v1.1.0/ubuntu1804_mkl-dnn_0.16-1_amd64.deb \
     && curl -LO $DOWNLOAD/v1.1.0/ubuntu1804_menoh_1.1.0-1_amd64.deb \
     && curl -LO $DOWNLOAD/v1.1.0/ubuntu1804_menoh-dev_1.1.0-1_amd64.deb \
-    && apt install ./*.deb
+    && apt install ./*.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && rm *.deb
