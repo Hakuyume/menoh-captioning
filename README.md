@@ -8,6 +8,7 @@ The model is based on [Chainer's example](https://github.com/chainer/chainer/blo
 
 - Rust 1.27+
 - [Menoh](https://github.com/pfnet-research/menoh) 1.1+
+- [onnx-chainer](https://github.com/chainer/onnx-chainer) 1.1.1a2
 
 ## Demo
 
@@ -17,8 +18,9 @@ The model is based on [Chainer's example](https://github.com/chainer/chainer/blo
 $ git clone https://github.com/Hakuyume/menoh-captioning.git
 $ cd menoh-captioning
 
-$ curl -LO https://github.com/Hakuyume/menoh-captioning/releases/download/assets/ImageCaptionModel.onnx
+$ curl -LO https://github.com/Hakuyume/menoh-captioning/releases/download/assets/model.npz
 $ curl -LO https://github.com/Hakuyume/menoh-captioning/releases/download/assets/vocab.txt
+$ python3 convert.py model.npz
 
 $ curl -LO https://upload.wikimedia.org/wikipedia/commons/7/79/Trillium_Poncho_cat_dog.jpg
 $ cargo run --release -- Trillium_Poncho_cat_dog.jpg
