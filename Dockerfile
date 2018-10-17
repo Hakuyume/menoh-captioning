@@ -33,7 +33,7 @@ RUN cd menoh-captioning \
 ENV ASSETS https://github.com/Hakuyume/menoh-captioning/releases/download/assets
 RUN pip3 install --no-cache-dir onnx-chainer==1.1.1a2 \
     && curl -LO $ASSETS/model.npz \
-    && python3 menoh-menoh-captioning/convert.py model.npz --out /usr/local/share/ImageCaptionModel.onnx \
+    && python3 menoh-captioning/convert.py model.npz --out /usr/local/share/ImageCaptionModel.onnx \
     && rm -rf model.npz $HOME/.chainer \
     && curl -L  $ASSETS/vocab.txt -o /usr/local/share/vocab.txt
 
