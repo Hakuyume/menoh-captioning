@@ -1,5 +1,5 @@
 """
-This script does not work with latest onnx-chainer
+This script works with onnx-chainer==1.1.1a2
 """
 
 import argparse

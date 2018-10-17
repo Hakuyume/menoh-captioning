@@ -7,6 +7,9 @@ RUN apt-get update \
     ca-certificates \
     curl \
     pkg-config \
+    python3-dev \
+    python3-pip \
+    python3-setuptools \
     && curl -LO $DOWNLOAD/v1.1.0/ubuntu1804_mkl-dnn_0.16-1_amd64.deb \
     && curl -LO $DOWNLOAD/v1.1.0/ubuntu1804_menoh_1.1.0-1_amd64.deb \
     && curl -LO $DOWNLOAD/v1.1.0/ubuntu1804_menoh-dev_1.1.0-1_amd64.deb \
@@ -27,6 +30,10 @@ RUN cd menoh-captioning \
     && install -m 755 target/release/menoh-captioning /usr/local/bin/
 
 ENV ASSETS https://github.com/Hakuyume/menoh-captioning/releases/download/assets
-RUN curl -L $ASSETS/ImageCaptionModel.onnx -o /usr/local/share/ImageCaptionModel.onnx \
-    && curl -L  $ASSETS/vocab.txt -o /usr/local/share/vocab.txt \
-    && curl -LO https://upload.wikimedia.org/wikipedia/commons/7/79/Trillium_Poncho_cat_dog.jpg
+RUN pip3 install --no-cache-dir onnx-chainer==1.1.1a2 \
+    && curl -LO $ASSETS/model.npz \
+    && python3 menoh-menoh-captioning/convert.py model.npz --out /usr/local/share/ImageCaptionModel.onnx \
+    && rm -rf model.npz $HOME/.chainer \
+    && curl -L  $ASSETS/vocab.txt -o /usr/local/share/vocab.txt
+
+RUN curl -LO https://upload.wikimedia.org/wikipedia/commons/7/79/Trillium_Poncho_cat_dog.jpg
