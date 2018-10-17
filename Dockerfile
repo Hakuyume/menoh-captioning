@@ -18,9 +18,10 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && rm *.deb
 
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain=stable
+
 COPY . menoh-captioning/
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain=stable
 RUN cd menoh-captioning \
     && sed \
     -e 's#ImageCaptionModel.onnx#/usr/local/share/ImageCaptionModel.onnx#' \
