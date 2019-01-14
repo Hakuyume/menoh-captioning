@@ -38,13 +38,15 @@ class ImageCaptionModel(model.ImageCaptionModel):
             x, self.lang_model.embed_word.W, self.lang_model.embed_word.b)
         return y
 
-    def lstm(self, h, x):
+    def lstm(self, h, c, x):
         lstm = self.lang_model.lstm[0]
         a = F.linear(x, lstm.w2, lstm.b2) + F.linear(h, lstm.w6, lstm.b6)
         i = F.linear(x, lstm.w0, lstm.b0) + F.linear(h, lstm.w4, lstm.b4)
         f = F.linear(x, lstm.w1, lstm.b1) + F.linear(h, lstm.w5, lstm.b5)
         o = F.linear(x, lstm.w3, lstm.b3) + F.linear(h, lstm.w7, lstm.b7)
-        return a, i, f, o
+        c = F.tanh(a) * F.sigmoid(i) + F.sigmoid(f) * c
+        h = F.sigmoid(o) * F.tanh(c)
+        return h, c
 
     def decode_caption(self, x):
         h = F.dropout(x, 0.5)
@@ -53,7 +55,9 @@ class ImageCaptionModel(model.ImageCaptionModel):
 
     def __call__(
             self,
-            embed_img_in, embed_word_in, lstm_h, lstm_x, decode_caption_in):
+            embed_img_in, embed_word_in,
+            lstm_h_in, lstm_c_in, lstm_x,
+            decode_caption_in):
         embed_img_in.node._onnx_name = 'embed_img_in'
         embed_img_out = self.embed_img(embed_img_in)
         embed_img_out.node._onnx_name = 'embed_img_out'
@@ -62,20 +66,19 @@ class ImageCaptionModel(model.ImageCaptionModel):
         embed_word_out = self.embed_word(embed_word_in)
         embed_word_out.node._onnx_name = 'embed_word_out'
 
-        lstm_h.node._onnx_name = 'lstm_h'
+        lstm_h_in.node._onnx_name = 'lstm_h_in'
+        lstm_c_in.node._onnx_name = 'lstm_c_in'
         lstm_x.node._onnx_name = 'lstm_x'
-        lstm_a, lstm_i, lstm_f, lstm_o = self.lstm(lstm_h, lstm_x)
-        lstm_a.node._onnx_name = 'lstm_a'
-        lstm_i.node._onnx_name = 'lstm_i'
-        lstm_f.node._onnx_name = 'lstm_f'
-        lstm_o.node._onnx_name = 'lstm_o'
+        lstm_h_out, lstm_c_out = self.lstm(lstm_h_in, lstm_c_in, lstm_x)
+        lstm_h_out.node._onnx_name = 'lstm_h_out'
+        lstm_c_out.node._onnx_name = 'lstm_c_out'
 
         decode_caption_in.node._onnx_name = 'decode_caption_in'
         decode_caption_out = self.decode_caption(decode_caption_in)
         decode_caption_out.node._onnx_name = 'decode_caption_out'
 
         return embed_img_out, embed_word_out, \
-            lstm_a, lstm_i, lstm_f, lstm_o, \
+            lstm_h_out, lstm_c_out, \
             decode_caption_out
 
     def serialize(self, serializer):
@@ -111,14 +114,16 @@ def main():
 
     embed_img_in = np.empty((1, 3, image_size, image_size), dtype=np.float32)
     embed_word_in = np.empty((1, vocab_size), dtype=np.float32)
-    lstm_h = np.empty((1, hidden_size), dtype=np.float32)
+    lstm_h_in = np.empty((1, hidden_size), dtype=np.float32)
+    lstm_c_in = np.empty((1, hidden_size), dtype=np.float32)
     lstm_x = np.empty((1, hidden_size), dtype=np.float32)
     decode_caption_in = np.empty((1, hidden_size), dtype=np.float32)
     with chainer.using_config('train', False), \
             mock.patch('builtins.id', IDGenerator()):
         onnx_chainer.export(
             model,
-            (embed_img_in, embed_word_in, lstm_h, lstm_x, decode_caption_in),
+            (embed_img_in, embed_word_in,
+             lstm_h_in, lstm_c_in, lstm_x, decode_caption_in),
             filename=args.out)
 
 

@@ -25,7 +25,8 @@ impl ImageCaptionModel {
             let builder = menoh::Builder::from_onnx(&path)?
                 .add_input::<f32>("embed_img_in", &[1, 3, IMAGE_SIZE, IMAGE_SIZE])?
                 .add_input::<f32>("embed_word_in", &[1, VOCAB_SIZE])?
-                .add_input::<f32>("lstm_h", &[1, HIDDEN_SIZE])?
+                .add_input::<f32>("lstm_h_in", &[1, HIDDEN_SIZE])?
+                .add_input::<f32>("lstm_c_in", &[1, HIDDEN_SIZE])?
                 .add_input::<f32>("lstm_x", &[1, HIDDEN_SIZE])?
                 .add_input::<f32>("decode_caption_in", &[1, HIDDEN_SIZE])?;
             outputs
@@ -37,7 +38,7 @@ impl ImageCaptionModel {
         Ok(Self {
             embed_img: build(&["embed_img_out"])?,
             embed_word: build(&["embed_word_out"])?,
-            lstm: build(&["lstm_a", "lstm_i", "lstm_f", "lstm_o"])?,
+            lstm: build(&["lstm_h_out", "lstm_c_out"])?,
             decode_caption: build(&["decode_caption_out"])?,
         })
     }
@@ -103,9 +104,13 @@ impl ImageCaptionModel {
         assert_eq!(c.len(), HIDDEN_SIZE);
 
         self.lstm
-            .get_variable_mut::<f32>("lstm_h")?
+            .get_variable_mut::<f32>("lstm_h_in")?
             .1
             .copy_from_slice(h);
+        self.lstm
+            .get_variable_mut::<f32>("lstm_c_in")?
+            .1
+            .copy_from_slice(c);
         self.lstm
             .get_variable_mut::<f32>("lstm_x")?
             .1
@@ -117,16 +122,8 @@ impl ImageCaptionModel {
 
         self.lstm.run()?;
 
-        let a = self.lstm.get_variable::<f32>("lstm_a")?.1;
-        let i = self.lstm.get_variable("lstm_i")?.1;
-        let f = self.lstm.get_variable("lstm_f")?.1;
-        let o = self.lstm.get_variable("lstm_o")?.1;
-
-        for k in 0..HIDDEN_SIZE {
-            c[k] = a[k].tanh() * sigmoid(i[k]) + sigmoid(f[k]) * c[k];
-            h[k] = sigmoid(o[k]) * c[k].tanh();
-        }
-
+        h.copy_from_slice(self.lstm.get_variable_mut::<f32>("lstm_h_out")?.1);
+        c.copy_from_slice(self.lstm.get_variable_mut::<f32>("lstm_c_out")?.1);
         Ok(())
     }
 
@@ -148,8 +145,4 @@ impl ImageCaptionModel {
             .max_by(|&i, &j| out[i].partial_cmp(&out[j]).unwrap_or(cmp::Ordering::Equal))
             .unwrap())
     }
-}
-
-fn sigmoid(x: f32) -> f32 {
-    1. / (1. + (-x).exp())
 }

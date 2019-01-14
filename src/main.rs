@@ -29,7 +29,11 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
 
-    let mut model = model::ImageCaptionModel::from_onnx("ImageCaptionModel.onnx", "mkldnn", "")?;
+    let mut model = model::ImageCaptionModel::from_onnx(
+        "ImageCaptionModel.onnx",
+        "mkldnn_with_generic_fallback",
+        "",
+    )?;
     let vocab = load_vocab("vocab.txt")?;
 
     let caption = model.predict(&image::open(args.arg_src)?)?;
