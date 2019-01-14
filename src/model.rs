@@ -104,11 +104,11 @@ impl ImageCaptionModel {
         assert_eq!(c.len(), HIDDEN_SIZE);
 
         self.lstm
-            .get_variable_mut::<f32>("lstm_h_in")?
+            .get_variable_mut("lstm_h_in")?
             .1
             .copy_from_slice(h);
         self.lstm
-            .get_variable_mut::<f32>("lstm_c_in")?
+            .get_variable_mut("lstm_c_in")?
             .1
             .copy_from_slice(c);
         self.lstm
@@ -122,8 +122,8 @@ impl ImageCaptionModel {
 
         self.lstm.run()?;
 
-        h.copy_from_slice(self.lstm.get_variable_mut::<f32>("lstm_h_out")?.1);
-        c.copy_from_slice(self.lstm.get_variable_mut::<f32>("lstm_c_out")?.1);
+        h.copy_from_slice(self.lstm.get_variable_mut("lstm_h_out")?.1);
+        c.copy_from_slice(self.lstm.get_variable_mut("lstm_c_out")?.1);
         Ok(())
     }
 
