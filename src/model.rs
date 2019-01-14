@@ -47,17 +47,14 @@ impl ImageCaptionModel {
         &mut self,
         img: &image::DynamicImage,
     ) -> Result<Vec<Option<usize>>, menoh::Error> {
-        let mut h = [0.; HIDDEN_SIZE];
-        let mut c = [0.; HIDDEN_SIZE];
-
-        self.embed_img(img)?;
-        self.lstm(&mut h, &mut c, true)?;
+        let x = self.embed_img(img)?.to_owned();
+        self.lstm(&x, true)?;
 
         let mut caption = Vec::new();
         let mut t = 0;
         for _ in 0..30 {
-            self.embed_word(t)?;
-            self.lstm(&mut h, &mut c, false)?;
+            let x = self.embed_word(t)?.to_owned();
+            let h = self.lstm(&x, false)?.to_owned();
             t = self.decode_caption(&h)?;
             if t == 1 {
                 break;
@@ -71,7 +68,7 @@ impl ImageCaptionModel {
         Ok(caption)
     }
 
-    fn embed_img(&mut self, img: &image::DynamicImage) -> Result<(), menoh::Error> {
+    fn embed_img(&mut self, img: &image::DynamicImage) -> Result<&[f32], menoh::Error> {
         let img = img.resize_exact(IMAGE_SIZE as _, IMAGE_SIZE as _, image::FilterType::Nearest);
         {
             let in_ = self.embed_img.get_variable_mut::<f32>("embed_img_in")?.1;
@@ -86,45 +83,41 @@ impl ImageCaptionModel {
                 }
             }
         }
-        self.embed_img.run()
+        self.embed_img.run()?;
+        Ok(self.embed_img.get_variable("embed_img_out")?.1)
     }
 
-    fn embed_word(&mut self, t: usize) -> Result<(), menoh::Error> {
+    fn embed_word(&mut self, t: usize) -> Result<&[f32], menoh::Error> {
         {
             let in_ = self.embed_word.get_variable_mut::<f32>("embed_word_in")?.1;
             for k in 0..VOCAB_SIZE {
                 in_[k] = if k == t { 1. } else { 0. };
             }
         }
-        self.embed_word.run()
+        self.embed_word.run()?;
+        Ok(self.embed_word.get_variable("embed_word_out")?.1)
     }
 
-    fn lstm(&mut self, h: &mut [f32], c: &mut [f32], use_img: bool) -> Result<(), menoh::Error> {
-        assert_eq!(h.len(), HIDDEN_SIZE);
-        assert_eq!(c.len(), HIDDEN_SIZE);
+    fn lstm(&mut self, x: &[f32], reset: bool) -> Result<&[f32], menoh::Error> {
+        assert_eq!(x.len(), HIDDEN_SIZE);
 
+        let mut h = [0.; HIDDEN_SIZE];
+        let mut c = [0.; HIDDEN_SIZE];
+        if !reset {
+            h.copy_from_slice(self.lstm.get_variable("lstm_h_out")?.1);
+            c.copy_from_slice(self.lstm.get_variable("lstm_c_out")?.1);
+        }
         self.lstm
             .get_variable_mut("lstm_h_in")?
             .1
-            .copy_from_slice(h);
+            .copy_from_slice(&h);
         self.lstm
             .get_variable_mut("lstm_c_in")?
             .1
-            .copy_from_slice(c);
-        self.lstm
-            .get_variable_mut::<f32>("lstm_x")?
-            .1
-            .copy_from_slice(if use_img {
-                self.embed_img.get_variable("embed_img_out")?.1
-            } else {
-                self.embed_word.get_variable("embed_word_out")?.1
-            });
-
+            .copy_from_slice(&c);
+        self.lstm.get_variable_mut("lstm_x")?.1.copy_from_slice(x);
         self.lstm.run()?;
-
-        h.copy_from_slice(self.lstm.get_variable_mut("lstm_h_out")?.1);
-        c.copy_from_slice(self.lstm.get_variable_mut("lstm_c_out")?.1);
-        Ok(())
+        Ok(self.lstm.get_variable("lstm_h_out")?.1)
     }
 
     fn decode_caption(&mut self, h: &[f32]) -> Result<usize, menoh::Error> {
