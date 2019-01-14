@@ -35,6 +35,6 @@ RUN pip3 install --no-cache-dir onnx-chainer==1.1.1a2 \
     && curl -LO $ASSETS/model.npz \
     && python3 menoh-captioning/convert.py model.npz --out /usr/local/share/ImageCaptionModel.onnx \
     && rm -rf model.npz $HOME/.chainer \
-    && curl -L  $ASSETS/vocab.txt -o /usr/local/share/vocab.txt
+    && curl -L $ASSETS/vocab.txt -o /usr/local/share/vocab.txt
 
 RUN curl -LO https://upload.wikimedia.org/wikipedia/commons/7/79/Trillium_Poncho_cat_dog.jpg
