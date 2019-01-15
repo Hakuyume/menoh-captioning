@@ -58,38 +58,27 @@ impl ImageCaptionModel {
     pub fn predict<'a>(
         &'a mut self,
         img: &image::DynamicImage,
-    ) -> Result<Predict<'a>, menoh::Error> {
+    ) -> Result<impl 'a + Iterator<Item = Result<Option<usize>, menoh::Error>>, menoh::Error> {
         {
             let x = embed_img(&mut self.embed_img, img)?;
             lstm(&mut self.lstm, x, true)?;
         }
-        Ok(Predict { model: self, t: 0 })
-    }
-}
-
-pub struct Predict<'a> {
-    model: &'a mut ImageCaptionModel,
-    t: usize,
-}
-
-impl<'a> Iterator for Predict<'a> {
-    type Item = Result<Option<usize>, menoh::Error>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let t = (|| {
-            let x = embed_word(&mut self.model.embed_word, self.t)?;
-            let h = lstm(&mut self.model.lstm, x, false)?;
-            decode_caption(&mut self.model.decode_caption, h)
-        })();
-        if let Ok(t) = t {
-            self.t = t;
-        }
-        match t {
-            Ok(1) => None,
-            Ok(0) | Ok(2) => Some(Ok(None)),
-            Ok(t) => Some(Ok(Some(t - 3))),
-            Err(err) => Some(Err(err)),
-        }
+        Ok((0..).scan((self, 0), |s, _| {
+            let t = (|| {
+                let x = embed_word(&mut s.0.embed_word, s.1)?;
+                let h = lstm(&mut s.0.lstm, x, false)?;
+                decode_caption(&mut s.0.decode_caption, h)
+            })();
+            if let Ok(t) = t {
+                s.1 = t;
+            }
+            match t {
+                Ok(1) => None,
+                Ok(0) | Ok(2) => Some(Ok(None)),
+                Ok(t) => Some(Ok(Some(t - 3))),
+                Err(err) => Some(Err(err)),
+            }
+        }))
     }
 }
 
