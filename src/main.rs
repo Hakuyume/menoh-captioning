@@ -36,9 +36,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     )?;
     let vocab = load_vocab("vocab.txt")?;
 
-    let caption = model.predict(&image::open(args.arg_src)?)?;
-    for t in caption {
-        match t {
+    for t in model.predict(&image::open(args.arg_src)?)?.take(30) {
+        match t? {
             Some(t) => print!("{} ", vocab[t]),
             None => print!("<unk> "),
         }

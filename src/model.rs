@@ -43,29 +43,41 @@ impl ImageCaptionModel {
         })
     }
 
-    pub fn predict(
-        &mut self,
+    pub fn predict<'a>(
+        &'a mut self,
         img: &image::DynamicImage,
-    ) -> Result<Vec<Option<usize>>, menoh::Error> {
-        let x = embed_img(&mut self.embed_img, img)?;
-        lstm(&mut self.lstm, x, true)?;
-
-        let mut caption = Vec::new();
-        let mut t = 0;
-        for _ in 0..30 {
-            let x = embed_word(&mut self.embed_word, t)?;
-            let h = lstm(&mut self.lstm, x, false)?;
-            t = decode_caption(&mut self.decode_caption, h)?;
-            if t == 1 {
-                break;
-            } else if t >= 3 {
-                caption.push(Some(t - 3));
-            } else {
-                caption.push(None);
-            }
+    ) -> Result<Predict<'a>, menoh::Error> {
+        {
+            let x = embed_img(&mut self.embed_img, img)?;
+            lstm(&mut self.lstm, x, true)?;
         }
+        Ok(Predict { model: self, t: 0 })
+    }
+}
 
-        Ok(caption)
+pub struct Predict<'a> {
+    model: &'a mut ImageCaptionModel,
+    t: usize,
+}
+
+impl<'a> Iterator for Predict<'a> {
+    type Item = Result<Option<usize>, menoh::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let t = (|| {
+            let x = embed_word(&mut self.model.embed_word, self.t)?;
+            let h = lstm(&mut self.model.lstm, x, false)?;
+            decode_caption(&mut self.model.decode_caption, h)
+        })();
+        if let Ok(t) = t {
+            self.t = t;
+        }
+        match t {
+            Ok(1) => None,
+            Ok(0) | Ok(2) => Some(Ok(None)),
+            Ok(t) => Some(Ok(Some(t - 3))),
+            Err(err) => Some(Err(err)),
+        }
     }
 }
 
