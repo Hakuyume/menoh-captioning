@@ -1,6 +1,7 @@
 use image;
 use menoh;
 use std::cmp;
+use std::iter;
 use std::path;
 
 use image::GenericImage;
@@ -63,15 +64,13 @@ impl ImageCaptionModel {
             let x = embed_img(&mut self.embed_img, img)?;
             lstm(&mut self.lstm, x, true)?;
         }
-        Ok((0..).scan((self, 0), |s, _| {
+        Ok(iter::repeat(()).scan(0, move |t, _| {
             let t = (|| {
-                let x = embed_word(&mut s.0.embed_word, s.1)?;
-                let h = lstm(&mut s.0.lstm, x, false)?;
-                decode_caption(&mut s.0.decode_caption, h)
+                let x = embed_word(&mut self.embed_word, *t)?;
+                let h = lstm(&mut self.lstm, x, false)?;
+                *t = decode_caption(&mut self.decode_caption, h)?;
+                Ok(*t)
             })();
-            if let Ok(t) = t {
-                s.1 = t;
-            }
             match t {
                 Ok(1) => None,
                 Ok(0) | Ok(2) => Some(Ok(None)),
